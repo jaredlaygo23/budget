@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Budget</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Budget">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<style>
+:root{
+  --bg:#FFFFFF; --ink:#000000; --ink2:#6E6E73; --ink3:#A1A1A6;
+  --line:#D6D6DB; --line2:#EAEAEF; --fill:#EFEFF2;
+  --inv-bg:#000000; --inv-ink:#FFFFFF;
+  --warn:#A55200; --over:#C62D1F; --danger:#C62D1F;
+  --sheet:#FFFFFF; --scrim:rgba(0,0,0,.32);
+  --seg-bg:#EFEFF2; --seg-sel:#FFFFFF; --seg-shadow:0 1px 3px rgba(0,0,0,.14);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#000000; --ink:#FFFFFF; --ink2:#98989D; --ink3:#636366;
+    --line:#2C2C2E; --line2:#1C1C1E; --fill:#1C1C1E;
+    --inv-bg:#FFFFFF; --inv-ink:#000000;
+    --warn:#FFB340; --over:#FF6961; --danger:#FF6961;
+    --sheet:#1C1C1E; --scrim:rgba(0,0,0,.5);
+    --seg-bg:#1C1C1E; --seg-sel:#3A3A3C; --seg-shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,system-ui,sans-serif;
+  font-size:17px; line-height:1.35; -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+  padding:0 env(safe-area-inset-right) calc(112px + env(safe-area-inset-bottom)) env(safe-area-inset-left);
+  -webkit-text-size-adjust:100%;
+}
+button{font-family:inherit;font-size:inherit;cursor:pointer;color:inherit}
+input{font-family:inherit;font-size:17px;color:var(--ink)}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:8px}
+.wrap{max-width:560px;margin:0 auto}
+
+/* ---------- pinned top ---------- */
+.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:.5px solid var(--line);
+  padding:calc(14px + env(safe-area-inset-top)) 16px 26px;max-width:560px;margin:0 auto}
+.banner{background:var(--fill);color:var(--warn);font-size:13px;font-weight:600;
+  padding:8px 12px;border-radius:9px;margin-bottom:8px}
+.hrow{display:flex;align-items:center;gap:10px}
+.seg{display:flex;flex:1;background:var(--seg-bg);border-radius:9px;padding:2px;min-width:0}
+.seg button{flex:1;min-width:0;border:0;background:transparent;color:var(--ink2);
+  font-size:14px;font-weight:600;border-radius:7px;min-height:44px;padding:0 6px}
+.seg button[aria-selected="true"]{background:var(--seg-sel);color:var(--ink);box-shadow:var(--seg-shadow)}
+.gear{flex:0 0 44px;height:44px;border:0;background:transparent;color:var(--ink2);
+  display:flex;align-items:center;justify-content:center;border-radius:9px}
+.gear:hover{color:var(--ink)}
+.status{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:20px;min-height:30px;line-height:1.3}
+.st-amt{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.st-amt.warn{color:var(--warn)} .st-amt.over{color:var(--over)}
+.st-meta{font-size:13px;color:var(--ink2);font-weight:500}
+.st-meta b{font-weight:600;color:var(--ink)}
+.st-meta b.warn{color:var(--warn)} .st-meta b.over{color:var(--over)}
+
+/* ---------- quick add ---------- */
+.qa{padding:0}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.chip{min-height:44px;border:.5px solid var(--line);background:transparent;color:var(--ink2);
+  border-radius:10px;font-size:13px;font-weight:600;padding:0 2px;line-height:1.15;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  transition:background .15s ease,color .15s ease,border-color .15s ease}
+.chip[aria-pressed="true"]{background:var(--inv-bg);color:var(--inv-ink);border-color:var(--inv-bg)}
+.qrow{display:flex;gap:8px;margin-top:10px}
+.money{display:flex;align-items:stretch;flex:0 0 96px;min-width:0;border:.5px solid var(--line);
+  border-radius:10px;padding-left:10px;min-height:44px}
+.money:focus-within{border-color:var(--ink)}
+.money span{display:flex;align-items:center;color:var(--ink3);font-weight:600}
+.money input{flex:1;min-width:0;border:0;background:transparent;outline:0;font-weight:600;padding:0 8px 0 3px}
+.note{flex:1;min-width:0;border:.5px solid var(--line);border-radius:10px;background:transparent;
+  padding:0 10px;outline:0;min-height:44px}
+.note:focus{border-color:var(--ink)}
+.iconbtn{position:relative;flex:0 0 44px;min-height:44px;border:.5px solid var(--line);
+  border-radius:10px;background:transparent;color:var(--ink2);display:flex;align-items:center;justify-content:center}
+.iconbtn.on{background:var(--fill);color:var(--ink);border-color:var(--ink)}
+.iconbtn input[type=date]{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0}
+.go{flex:0 0 44px;min-height:44px;border:0;border-radius:10px;background:var(--inv-bg);color:var(--inv-ink);
+  display:flex;align-items:center;justify-content:center;transition:opacity .15s ease}
+.go:active{opacity:.65}
+.err{color:var(--over);font-size:13px;font-weight:500;padding:12px 0 0}
+.datenote{font-size:13px;color:var(--ink2);padding:12px 0 0;display:flex;align-items:center;gap:8px}
+.linkbtn{background:none;border:0;color:var(--ink2);text-decoration:underline;padding:6px 2px;font-size:13px}
+.linkbtn:hover{color:var(--ink)}
+
+/* ---------- sections ---------- */
+.sec{padding:38px 16px 0;max-width:560px;margin:0 auto}
+.sec+.sec{margin-top:60px;padding-top:60px;border-top:.5px solid var(--line)}
+.sec h2{font-size:17px;font-weight:600;color:var(--ink);margin:0 0 28px}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.sechead h2{margin-bottom:28px}
+.hint{font-size:13px;color:var(--ink3);margin:28px 0 0;line-height:1.55}
+
+/* ---------- day strip ---------- */
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;align-items:end}
+.dcol{display:flex;flex-direction:column;align-items:center;gap:5px;border:0;background:transparent;
+  padding:0;min-height:44px;-webkit-tap-highlight-color:transparent}
+.dcol:disabled{opacity:.4;cursor:default}
+.track{position:relative;width:100%;height:72px;background:var(--fill);border-radius:5px;
+  display:flex;align-items:flex-end;overflow:hidden}
+.bar{display:block;width:100%;background:var(--ink);border-radius:3px 3px 0 0}
+.bar.over{background:var(--over)}
+.limit{display:block;position:absolute;left:0;right:0;border-top:1px dashed var(--ink3)}
+.dlab{font-size:11px;font-weight:500;color:var(--ink3)}
+.dcol.today .dlab{color:var(--ink);font-weight:700}
+.dcol.today .track{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.dcol[aria-pressed="true"] .track{box-shadow:inset 0 0 0 2px var(--ink)}
+.dcol[aria-pressed="true"] .dlab{background:var(--inv-bg);color:var(--inv-ink);
+  border-radius:5px;padding:1px 7px;font-weight:700}
+.wexcl{opacity:.5}
+.badge{font-size:11px;font-weight:700;color:var(--ink2);border:.5px solid var(--line);
+  padding:1px 6px;border-radius:999px;margin-left:6px;vertical-align:2px}
+
+/* ---------- rows ---------- */
+.crow{display:flex;align-items:center;gap:14px;min-height:64px}
+.cname{flex:0 0 104px;font-size:16px}
+.cbar{flex:1;height:4px;background:var(--fill);border-radius:2px;overflow:hidden}
+.cbar i{display:block;height:100%;background:var(--ink);border-radius:2px}
+.cval{flex:0 0 86px;text-align:right;font-size:16px;font-weight:600}
+
+.list{list-style:none;margin:0;padding:0}
+.grouphead{display:flex;justify-content:space-between;align-items:baseline;
+  font-size:14px;font-weight:600;color:var(--ink2);padding:38px 0 14px}
+.grouphead:first-child{padding-top:2px}
+.swipe{position:relative;overflow:hidden;border-bottom:.5px solid var(--line2)}
+.delbtn{position:absolute;right:0;top:0;bottom:0;width:88px;border:0;border-radius:0;
+  background:var(--danger);color:#fff;font-size:15px;font-weight:600}
+.row{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:78px;
+  padding:21px 0;border:0;background:var(--bg);text-align:left;transition:transform .18s ease}
+.rmain{flex:1;min-width:0}
+.rtitle{display:block;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rtitle.dim{color:var(--ink3)}
+.rsub{display:block;font-size:13px;color:var(--ink2)}
+.ramt{font-size:17px;font-weight:600;white-space:nowrap}
+.empty{color:var(--ink3);font-size:15px;padding:4px 0 2px}
+
+.statrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  min-height:72px;padding:23px 0;border-bottom:.5px solid var(--line2);font-size:16px}
+.statrow:last-child{border-bottom:0}
+.statrow .k{color:var(--ink2)}
+.statrow .v{font-weight:600;white-space:nowrap}
+.statrow .v.over{color:var(--over)} .statrow .v.warn{color:var(--warn)}
+button.statrow{width:100%;border:0;border-bottom:.5px solid var(--line2);background:transparent;
+  text-align:left;color:inherit;font-family:inherit;font-size:15px;min-height:44px}
+button.statrow:hover .pen{color:var(--ink)}
+.pen{font-size:13px;font-weight:600;color:var(--ink2);margin-left:8px;text-decoration:underline}
+
+/* ---------- month ---------- */
+.mnav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:38px 16px 18px;max-width:560px;margin:0 auto}
+.mtitle{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.arrow{width:44px;height:44px;border:0;background:transparent;color:var(--ink2);
+  display:flex;align-items:center;justify-content:center;border-radius:9px}
+.arrow:disabled{color:var(--line);cursor:default}
+.arrow:not(:disabled):hover{color:var(--ink)}
+.whead{display:flex;align-items:center;gap:12px;width:100%;min-height:80px;padding:22px 0;
+  border:0;background:transparent;text-align:left;border-bottom:.5px solid var(--line2)}
+.wchev{flex:0 0 14px;color:var(--ink3);display:flex;align-items:center;transition:transform .18s ease}
+.whead[aria-expanded="true"] .wchev{transform:rotate(90deg)}
+.wdate{flex:1;min-width:0;font-size:16px;font-weight:600}
+.wdate em{display:block;font-style:normal;font-size:13px;font-weight:400;color:var(--ink2)}
+.wamt{font-size:16px;font-weight:600;white-space:nowrap}
+.wamt.warn{color:var(--warn)} .wamt.over{color:var(--over)}
+.wbody{padding:20px 0 36px}
+.wacts{display:flex;gap:10px;margin-top:28px}
+.wacts .wide{margin-top:0}
+.now{font-size:11px;font-weight:700;color:var(--inv-ink);background:var(--inv-bg);
+  padding:1px 6px;border-radius:999px;vertical-align:2px;margin-left:6px}
+
+/* ---------- sheet ---------- */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:60;opacity:0;transition:opacity .22s ease}
+.scrim.in{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--sheet);
+  border-radius:16px 16px 0 0;max-height:90vh;overflow-y:auto;
+  padding:10px 16px calc(18px + env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform .24s cubic-bezier(.32,.72,0,1)}
+.sheet.in{transform:none}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+.sheet h3{font-size:19px;font-weight:700;margin:0 0 14px;letter-spacing:-.02em}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:5px}
+.field .note,.field input[type=date]{width:100%}
+.field input[type=date]{border:.5px solid var(--line);border-radius:10px;background:transparent;
+  padding:0 10px;min-height:44px;outline:0}
+.sheetacts{display:flex;gap:8px;margin-top:16px}
+.btn{flex:1;min-height:48px;border:0;border-radius:11px;background:var(--inv-bg);color:var(--inv-ink);
+  font-size:17px;font-weight:600}
+.btn.sec2{background:var(--fill);color:var(--ink)}
+.btn.del{background:transparent;color:var(--danger);border:.5px solid var(--line)}
+.wide{width:100%;min-height:48px;border-radius:11px;border:.5px solid var(--line);background:transparent;
+  font-size:15px;font-weight:600;margin-top:10px}
+.wide.danger{color:var(--danger)}
+textarea.backup{width:100%;min-height:104px;margin-top:10px;border:.5px solid var(--line);border-radius:10px;
+  background:transparent;color:var(--ink);padding:10px;font-size:12px;resize:vertical;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+/* ---------- toast ---------- */
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));
+  transform:translateX(-50%) translateY(160%);background:var(--inv-bg);color:var(--inv-ink);
+  border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:14px;
+  font-size:15px;font-weight:500;z-index:70;max-width:calc(100% - 32px);
+  transition:transform .22s cubic-bezier(.32,.72,0,1)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast button{background:none;border:0;color:var(--inv-ink);font-weight:700;padding:4px;text-decoration:underline}
+.loading{color:var(--ink3);text-align:center;padding:40px 0;font-size:15px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:359px){
+  .chip{font-size:12px}
+  .money{flex:0 0 84px}
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Loading…</div></div>
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="toastAct" hidden>Undo</button></div>
+
+<script>
+const CATS=['Transportation','Eating out','Purchases','Business'];
+const CHIP={'Transportation':'Transport','Eating out':'Food','Purchases':'Purchases','Business':'Business'};
+/* Display names. The stored category is never renamed — 'Eating out' stays the
+   value on disk so old saves and backups keep working; only the label moves. */
+const NAME={'Transportation':'Transportation','Eating out':'Food','Purchases':'Purchases','Business':'Business'};
+const KEY='budget:v1';
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const RM=window.matchMedia('(prefers-reduced-motion:reduce)');
+
+const I_GEAR='<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 6.5h7M14.5 6.5h2.5M3 13.5h2.5M10 13.5h7"/><circle cx="12.25" cy="6.5" r="2.25"/><circle cx="7.75" cy="13.5" r="2.25"/></svg>';
+const I_CAL='<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.75" y="4.25" width="14.5" height="13" rx="2.5"/><path d="M2.75 8.5h14.5M6.5 2.75v3M13.5 2.75v3" stroke-linecap="round"/></svg>';
+const I_ADD='<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h11M10.5 5.5 15 10l-4.5 4.5"/></svg>';
+const I_CHEV='<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg>';
+const I_LEFT='<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l-6 6 6 6"/></svg>';
+const I_RIGHT='<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4l6 6-6 6"/></svg>';
+
+let state={expenses:[],profits:[],allowance:3000,dailyLimit:500,monthlyAllowance:12000,weekSettings:{},monthSettings:{},excludedWeeks:{}};
+let view='week';
+let viewMonth=null;
+let draft={cat:'Transportation',date:null};
+let pDate=null;
+let openWeeks={};
+let editing=null;
+let editingMonth=null;
+let editingWeek=null;
+let selDay=null;
+let memoryOnly=false, undoStack=null, toastTimer=null, lastSeenDay=null, settingsOpen=false, backupOpen=false;
+
+/* ---------- dates ---------- */
+function iso(d){const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');}
+function today(){return iso(new Date());}
+function fromIso(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function weekStart(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+function fmtDay(s){return fromIso(s).toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function fmtWeekday(s){return fromIso(s).toLocaleDateString('en-US',{weekday:'long'});}
+function monthOf(s){return s.slice(0,7);}
+function monthLabel(ym){const[y,m]=ym.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});}
+function shiftMonth(ym,n){const[y,m]=ym.split('-').map(Number);const d=new Date(y,m-1+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function curWeekKey(){return iso(weekStart(new Date()));}
+function peso(n){const v=Math.round(n*100)/100;const dec=Number.isInteger(v)?0:2;
+  return (v<0?'-':'')+'₱'+Math.abs(v).toLocaleString('en-PH',{minimumFractionDigits:dec,maximumFractionDigits:dec});}
+
+/* ---------- storage ---------- */
+/* localStorage, not the artifact sandbox's window.storage, which does not
+   exist in a real browser. memoryOnly stays as the fallback for private
+   modes where touching localStorage throws. */
+async function load(){
+  let raw=null;
+  try{raw=localStorage.getItem(KEY);}
+  catch(e){memoryOnly=true;return;}
+  try{if(raw)Object.assign(state,JSON.parse(raw));}
+  catch(e){}
+  if(!state.weekSettings)state.weekSettings={};
+  if(!state.monthSettings)state.monthSettings={};
+  if(!state.excludedWeeks)state.excludedWeeks={};
+  if(typeof state.monthlyAllowance!=='number')state.monthlyAllowance=12000;
+}
+async function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(state));memoryOnly=false;}
+  catch(e){memoryOnly=true;}
+}
+
+/* Freeze this week's allowance the first time we see it, so changing the
+   allowance later never rewrites a week that has already been lived. */
+async function sealCurrentWeek(){
+  const wk=curWeekKey();
+  if(!state.weekSettings[wk]){
+    state.weekSettings[wk]={allowance:state.allowance,dailyLimit:state.dailyLimit};
+    await save();
+  }
+}
+function settingsFor(wk){
+  return state.weekSettings[wk]||{allowance:state.allowance,dailyLimit:state.dailyLimit};
+}
+
+/* Records this month's target the first time the month is seen, so that later
+   changing the default never silently rewrites a month already lived. It does
+   not lock the month — saveMonthAllowance() can correct any month, any time. */
+async function sealCurrentMonth(){
+  const ym=monthOf(curWeekKey());
+  if(!state.monthSettings[ym]){
+    state.monthSettings[ym]={allowance:state.monthlyAllowance};
+    await save();
+  }
+}
+function monthSettingsFor(ym){
+  return state.monthSettings[ym]||{allowance:state.monthlyAllowance};
+}
+
+/* ---------- math ---------- */
+function sum(a){return a.reduce((t,x)=>t+x.amount,0);}
+function weekStats(wk){
+  const from=wk,to=iso(addDays(fromIso(wk),6));
+  const exp=state.expenses.filter(e=>e.date>=from&&e.date<=to);
+  const pro=state.profits.filter(p=>p.date>=from&&p.date<=to);
+  const byCat={};CATS.forEach(c=>byCat[c]=sum(exp.filter(e=>e.category===c)));
+  const total=sum(exp),business=byCat['Business'],personal=total-business;
+  const st=settingsFor(wk);
+  return{wk,from,to,exp,pro,byCat,total,business,personal,
+    allowance:st.allowance,dailyLimit:st.dailyLimit,
+    remaining:st.allowance-personal,profits:sum(pro)};
+}
+function tone(remaining,allowance){
+  if(remaining<0)return'over';
+  if(allowance>0&&remaining<=allowance*0.25)return'warn';
+  return'ok';
+}
+/* A week belongs to the month its Monday falls in — so no week is split or double counted. */
+function mondaysIn(ym){
+  const[y,m]=ym.split('-').map(Number);
+  const last=new Date(y,m,0);
+  let d=weekStart(new Date(y,m-1,1));
+  if(d.getMonth()!==m-1)d=addDays(d,7);
+  const out=[];
+  while(d<=last){out.push(iso(d));d=addDays(d,7);}
+  return out.filter(k=>k<=curWeekKey());
+}
+function monthStats(ym){
+  const weeks=mondaysIn(ym).map(weekStats).map(w=>({...w,excluded:!!state.excludedWeeks[w.wk]}));
+  const counted=weeks.filter(w=>!w.excluded);
+  const acc={weeks,counted,excludedCount:weeks.length-counted.length,
+    total:0,business:0,personal:0,allowance:0,profits:0,byCat:{}};
+  CATS.forEach(c=>acc.byCat[c]=0);
+  counted.forEach(w=>{
+    acc.total+=w.total;acc.business+=w.business;acc.personal+=w.personal;
+    acc.allowance+=w.allowance;acc.profits+=w.profits;
+    CATS.forEach(c=>acc.byCat[c]+=w.byCat[c]);
+  });
+  acc.remaining=acc.allowance-acc.personal;
+  acc.monthlyAllowance=monthSettingsFor(ym).allowance;
+  acc.monthRemaining=acc.monthlyAllowance-acc.personal;
+  return acc;
+}
+function earliestMonth(){
+  const dates=[...state.expenses.map(e=>e.date),...state.profits.map(p=>p.date)];
+  if(!dates.length)return monthOf(curWeekKey());
+  const min=dates.reduce((a,b)=>a<b?a:b);
+  return monthOf(iso(weekStart(fromIso(min))));
+}
+function inCurrentWeek(d){
+  const wk=curWeekKey();
+  return d>=wk&&d<=iso(addDays(fromIso(wk),6));
+}
+function findRec(kind,id){
+  return (kind==='expense'?state.expenses:state.profits).find(r=>r.id===id)||null;
+}
+
+/* ---------- render ---------- */
+function render(){
+  lastSeenDay=today();
+  if(!viewMonth)viewMonth=monthOf(curWeekKey());
+  document.getElementById('app').innerHTML=
+    topBar()+
+    `<div class="wrap">${view==='week'?weekBody():monthBody()}</div>`+
+    sheetLayer();
+  wire();
+}
+
+function topBar(){
+  const wk=curWeekKey(), s=weekStats(wk);
+  let statusHtml;
+  if(view==='week'){
+    const t=tone(s.remaining,s.allowance);
+    const spentToday=sum(s.exp.filter(e=>e.date===today()&&e.category!=='Business'));
+    const dailyLeft=s.dailyLimit-spentToday;
+    const dTone=dailyLeft<0?'over':(s.dailyLimit>0&&dailyLeft<=s.dailyLimit*0.25?'warn':'');
+    statusHtml=`
+      <div class="st-amt ${t}">${peso(s.remaining)}</div>
+      <div class="st-meta">${s.remaining<0?'this week':'left this week'}${s.dailyLimit>0?` &middot; <b class="${dTone}">${peso(dailyLeft)}</b>${dailyLeft<0?' today':' left today'}`:''} &middot; ${fmtDay(s.from)} – ${fmtDay(s.to)}</div>`;
+  }else{
+    const m=monthStats(viewMonth), t=tone(m.monthRemaining,m.monthlyAllowance);
+    statusHtml=`
+      <div class="st-amt ${t}">${peso(m.monthRemaining)}</div>
+      <div class="st-meta">${m.monthRemaining<0?'in':'left in'} ${monthLabel(viewMonth).split(' ')[0]} &middot; <b>${peso(m.personal)}</b> of ${peso(m.monthlyAllowance)}</div>`;
+  }
+  return `<div class="top">
+    ${memoryOnly?`<div class="banner">Saving is unavailable here — entries will disappear when you close the page.</div>`:''}
+    <div class="hrow">
+      <div class="seg" role="tablist">
+        <button role="tab" data-view="week" aria-selected="${view==='week'}">Week</button>
+        <button role="tab" data-view="month" aria-selected="${view==='month'}">Month</button>
+      </div>
+      <button class="gear" id="openSettings" aria-label="Settings">${I_GEAR}</button>
+    </div>
+    <div class="status">${statusHtml}</div>
+  </div>`;
+}
+
+/* Scrolls with the page rather than living in the pinned header: the header
+   stays a compact status line, and the entry block gets room to breathe. */
+function quickAdd(){
+  const custom=draft.date&&draft.date!==today();
+  return `<section class="sec"><div class="qa">
+    <div class="chips" role="group" aria-label="Category">
+      ${CATS.map(c=>`<button class="chip" data-cat="${c}" aria-pressed="${draft.cat===c}">${CHIP[c]}</button>`).join('')}
+    </div>
+    <div class="qrow">
+      <div class="money"><span>&#8369;</span><input id="amount" inputmode="decimal" placeholder="0" aria-label="Amount"></div>
+      <input id="reason" class="note" placeholder="Note" aria-label="Note">
+      <button class="iconbtn ${custom?'on':''}" id="dateBtn" aria-label="Change date">${I_CAL}
+        <input type="date" id="dateInput" value="${draft.date||today()}" aria-label="Expense date"></button>
+      <button class="go" id="addExpense" aria-label="Add expense">${I_ADD}</button>
+    </div>
+    <div class="err" id="expErr" hidden></div>
+    ${custom?`<div class="datenote">Dated ${fmtDay(draft.date)}<button class="linkbtn" id="resetDate">Back to today</button></div>`:''}
+  </div></section>`;
+}
+
+function weekBody(){
+  const wk=curWeekKey(), s=weekStats(wk);
+  const perDay=[];
+  for(let i=0;i<7;i++){const ds=iso(addDays(fromIso(wk),i));
+    perDay.push({date:ds,amount:sum(s.exp.filter(e=>e.date===ds&&e.category!=='Business'))});}
+  const maxBar=Math.max(s.dailyLimit||0,...perDay.map(d=>d.amount),1);
+  const limitPct=s.dailyLimit>0?Math.min(100,(s.dailyLimit/maxBar)*100):null;
+
+  return `
+    ${quickAdd()}
+    <section class="sec">
+      <h2>Daily spending</h2>
+      <div class="strip">
+        ${perDay.map((d,i)=>{
+          const h=d.amount>0?Math.max(3,(d.amount/maxBar)*100):0;
+          const over=s.dailyLimit>0&&d.amount>s.dailyLimit;
+          const future=d.date>today();
+          return `<button class="dcol ${d.date===today()?'today':''}" data-day="${d.date}"
+              aria-pressed="${selDay===d.date}" ${future?'disabled':''}
+              aria-label="${fmtWeekday(d.date)} ${fmtDay(d.date)}, ${peso(d.amount)}">
+            <span class="track">
+              ${limitPct!==null?`<span class="limit" style="bottom:${limitPct}%"></span>`:''}
+              <span class="bar ${over?'over':''}" style="height:${h}%"></span>
+            </span><span class="dlab">${DAYS[i]}</span></button>`;
+        }).join('')}
+      </div>
+      <p class="hint">Tap a day to log or review that day. Personal spending only — the dashed line is your ${peso(s.dailyLimit)} daily limit, and business spending is excluded.</p>
+    </section>
+
+    <section class="sec">
+      <h2>By category</h2>
+      ${CATS.map(c=>{const v=s.byCat[c];const pct=s.total>0?(v/s.total)*100:0;
+        return `<div class="crow"><div class="cname">${NAME[c]}</div>
+          <div class="cbar"><i style="width:${pct}%"></i></div>
+          <div class="cval">${peso(v)}</div></div>`;}).join('')}
+      <p class="hint">Spent ${peso(s.total)} in total &middot; ${peso(s.business)} of that is business and never touches your allowance.</p>
+    </section>
+
+    <section class="sec">
+      <div class="sechead">
+        <h2>${selDay?fmtWeekday(selDay)+', '+fmtDay(selDay):'Entries'}</h2>
+        ${selDay?`<button class="linkbtn" id="clearDay">Whole week</button>`:''}
+      </div>
+      ${selDay
+        ? expenseList(s.exp.filter(e=>e.date===selDay),false,'Nothing logged on this day yet. Add it above.')
+        : expenseList(s.exp,true)}
+    </section>
+
+    <section class="sec">
+      <h2>Profits</h2>
+      <div class="statrow"><span class="k">This week</span><span class="v">${peso(s.profits)}</span></div>
+      <div class="qrow" style="margin-top:10px">
+        <div class="money"><span>&#8369;</span><input id="pAmount" inputmode="decimal" placeholder="0" aria-label="Profit amount"></div>
+        <input id="pSource" class="note" placeholder="Source" aria-label="Source">
+        <button class="iconbtn ${pDate&&pDate!==today()?'on':''}" id="pDateBtn" aria-label="Change date">${I_CAL}
+          <input type="date" id="pDateInput" value="${pDate||today()}" aria-label="Profit date"></button>
+        <button class="go" id="addProfit" aria-label="Add profit">${I_ADD}</button>
+      </div>
+      <div class="err" id="proErr" hidden></div>
+      ${pDate&&pDate!==today()?`<div class="datenote">Dated ${fmtDay(pDate)}<button class="linkbtn" id="pResetDate">Back to today</button></div>`:''}
+      ${profitList(s.pro)}
+    </section>`;
+}
+
+function monthBody(){
+  const m=monthStats(viewMonth);
+  const cur=monthOf(curWeekKey());
+  const first=earliestMonth();
+  const isCur=viewMonth===cur;
+
+  return `
+    <div class="mnav">
+      <button class="arrow" id="prevMonth" aria-label="Previous month" ${viewMonth<=first?'disabled':''}>${I_LEFT}</button>
+      <div class="mtitle">${monthLabel(viewMonth)}</div>
+      <button class="arrow" id="nextMonth" aria-label="Next month" ${isCur?'disabled':''}>${I_RIGHT}</button>
+    </div>
+
+    <section class="sec">
+      <h2>Summary</h2>
+      <div class="statrow"><span class="k">Personal spending</span><span class="v">${peso(m.personal)}</span></div>
+      <button class="statrow" id="editMonthAllowance"><span class="k">Monthly allowance</span><span class="v">${peso(m.monthlyAllowance)}<span class="pen">Edit</span></span></button>
+      <div class="statrow"><span class="k">Remaining</span><span class="v ${tone(m.monthRemaining,m.monthlyAllowance)==='ok'?'':tone(m.monthRemaining,m.monthlyAllowance)}">${peso(m.monthRemaining)}</span></div>
+      <div class="statrow"><span class="k">Business expenses</span><span class="v">${peso(m.business)}</span></div>
+      <div class="statrow"><span class="k">Profits</span><span class="v">${peso(m.profits)}</span></div>
+      <div class="statrow"><span class="k">Profit after business</span><span class="v ${m.profits-m.business<0?'over':''}">${peso(m.profits-m.business)}</span></div>
+      ${m.excludedCount?`<p class="hint">${m.excludedCount} week${m.excludedCount===1?'':'s'} excluded from these totals. ${m.excludedCount===1?'Its entries are':'Their entries are'} untouched — reopen ${m.excludedCount===1?'it':'them'} below to count ${m.excludedCount===1?'it':'them'} again.</p>`:''}
+    </section>
+
+    ${m.total>0?`<section class="sec">
+      <h2>By category</h2>
+      ${CATS.map(c=>{const v=m.byCat[c];const pct=m.total>0?(v/m.total)*100:0;
+        return `<div class="crow"><div class="cname">${NAME[c]}</div>
+          <div class="cbar"><i style="width:${pct}%"></i></div>
+          <div class="cval">${peso(v)}</div></div>`;}).join('')}
+    </section>`:''}
+
+    <section class="sec">
+      <h2>Week by week</h2>
+      ${m.weeks.length?m.weeks.map(w=>{
+        const wt=tone(w.remaining,w.allowance);
+        const open=!!openWeeks[w.wk];
+        return `<div class="${w.excluded?'wexcl':''}">
+          <button class="whead" data-week="${w.wk}" aria-expanded="${open}">
+            <span class="wchev">${I_CHEV}</span>
+            <span class="wdate">${fmtDay(w.from)} – ${fmtDay(w.to)}${w.wk===curWeekKey()?'<span class="now">now</span>':''}${w.excluded?'<span class="badge">Not counted</span>':''}
+              <em>${w.exp.length} entr${w.exp.length===1?'y':'ies'} &middot; ${peso(w.personal)} personal</em></span>
+            <span class="wamt ${wt==='ok'?'':wt}">${peso(w.remaining)}${w.remaining<0?'':' left'}</span>
+          </button>
+          ${open?`<div class="wbody">
+            <button class="statrow" data-weekedit="${w.wk}"><span class="k">Allowance</span><span class="v">${peso(w.allowance)}<span class="pen">Edit</span></span></button>
+            ${CATS.map(c=>w.byCat[c]>0?`<div class="statrow"><span class="k">${NAME[c]}</span><span class="v">${peso(w.byCat[c])}</span></div>`:'').join('')}
+            <h2 style="margin:16px 0 4px">Entries</h2>
+            ${expenseList(w.exp,false,'No expenses in this week yet.')}
+            ${w.pro.length?`<h2 style="margin:16px 0 4px">Profits</h2>${profitList(w.pro)}`:''}
+            <div class="wacts">
+              <button class="wide" data-addexp="${w.wk}">Add expense</button>
+              <button class="wide" data-addpro="${w.wk}">Add profit</button>
+            </div>
+            <p class="hint">Tap any entry above to edit it, or swipe it left to delete. Totals update themselves.</p>
+          </div>`:''}
+        </div>`;
+      }).join(''):`<p class="empty">No weeks recorded in this month yet.</p>`}
+    </section>`;
+}
+
+function entryRow(e){
+  return `<li class="swipe">
+    <button class="delbtn" data-del="${e.id}" data-kind="expense" tabindex="-1">Delete</button>
+    <button class="row" data-edit="${e.id}" data-kind="expense">
+      <span class="rmain">
+        <span class="rtitle ${e.reason?'':'dim'}">${esc(e.reason)||'No note'}</span>
+        <span class="rsub">${NAME[e.category]||e.category}</span>
+      </span>
+      <span class="ramt">${peso(e.amount)}</span>
+    </button></li>`;
+}
+function profitRow(p){
+  return `<li class="swipe">
+    <button class="delbtn" data-del="${p.id}" data-kind="profit" tabindex="-1">Delete</button>
+    <button class="row" data-edit="${p.id}" data-kind="profit">
+      <span class="rmain">
+        <span class="rtitle ${p.source?'':'dim'}">${esc(p.source)||'No note'}</span>
+        <span class="rsub">${fmtWeekday(p.date)}, ${fmtDay(p.date)}</span>
+      </span>
+      <span class="ramt">${peso(p.amount)}</span>
+    </button></li>`;
+}
+function expenseList(list,grouped,emptyMsg){
+  if(!list.length)return `<p class="empty">${emptyMsg||'Nothing logged yet this week.'}</p>`;
+  if(!grouped){
+    return `<ul class="list">${list.slice().sort((a,b)=>a.date<b.date?1:-1).map(entryRow).join('')}</ul>`;
+  }
+  const groups={};
+  list.forEach(e=>{(groups[e.date]=groups[e.date]||[]).push(e);});
+  const dates=Object.keys(groups).sort().reverse();
+  return `<ul class="list">${dates.map(d=>{
+    const head=d===today()?'Today':fmtWeekday(d)+', '+fmtDay(d);
+    return `<li class="grouphead"><span>${head}</span><span>${peso(sum(groups[d]))}</span></li>`+
+      groups[d].slice().reverse().map(entryRow).join('');
+  }).join('')}</ul>`;
+}
+function profitList(list){
+  if(!list.length)return '';
+  return `<ul class="list" style="margin-top:8px">${list.slice().reverse().map(profitRow).join('')}</ul>`;
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ---------- sheets ---------- */
+function sheetLayer(){
+  if(editing)return `<div class="scrim" id="scrim"></div><div class="sheet" id="sheet">${editSheet()}</div>`;
+  if(editingMonth)return `<div class="scrim" id="scrim"></div><div class="sheet" id="sheet">${monthAllowanceSheet()}</div>`;
+  if(editingWeek)return `<div class="scrim" id="scrim"></div><div class="sheet" id="sheet">${weekSettingsSheet()}</div>`;
+  if(settingsOpen)return `<div class="scrim" id="scrim"></div><div class="sheet" id="sheet">${settingsSheet()}</div>`;
+  return '';
+}
+function weekSettingsSheet(){
+  const st=settingsFor(editingWeek);
+  const to=iso(addDays(fromIso(editingWeek),6));
+  const excluded=!!state.excludedWeeks[editingWeek];
+  return `<div class="grab"></div>
+    <h3>Week of ${fmtDay(editingWeek)} – ${fmtDay(to)}</h3>
+    <div class="field"><label for="wAllow">Weekly allowance</label>
+      <div class="money" style="flex:1"><span>&#8369;</span><input id="wAllow" inputmode="decimal" value="${st.allowance}"></div></div>
+    <div class="field"><label for="wLimit">Daily spending limit</label>
+      <div class="money" style="flex:1"><span>&#8369;</span><input id="wLimit" inputmode="decimal" value="${st.dailyLimit}"></div></div>
+    <p class="hint">Changes this week only — other weeks and the defaults are untouched, and you can correct it again later.</p>
+    <div class="sheetacts">
+      <button class="btn sec2" id="cancelWeek">Cancel</button>
+      <button class="btn" id="saveWeek">Save</button>
+    </div>
+    <button class="wide ${excluded?'':'danger'}" id="toggleWeekIncluded">${excluded?'Count this week in the month again':'Exclude this week from the month'}</button>
+    <p class="hint">Excluding hides the week from the monthly totals only. Nothing is deleted — the entries stay in the weekly view and can be counted again at any time.</p>`;
+}
+function monthAllowanceSheet(){
+  return `<div class="grab"></div>
+    <h3>Allowance for ${monthLabel(editingMonth)}</h3>
+    <div class="field"><label for="mAllow">Monthly allowance</label>
+      <div class="money" style="flex:1"><span>&#8369;</span><input id="mAllow" inputmode="decimal" value="${monthSettingsFor(editingMonth).allowance}"></div></div>
+    <p class="hint">Changes ${monthLabel(editingMonth)} and nothing else — other months and the default for new months are untouched. You can come back and correct this at any time.</p>
+    <div class="sheetacts">
+      <button class="btn sec2" id="cancelMonth">Cancel</button>
+      <button class="btn" id="saveMonth">Save</button>
+    </div>`;
+}
+function editSheet(){
+  const isNew=!editing.id;
+  const rec=isNew?null:findRec(editing.kind,editing.id);
+  if(!isNew&&!rec)return '';
+  const isExp=editing.kind==='expense';
+  /* When adding into a specific week, pin the picker to that week's range so a
+     new entry cannot silently land outside the week it was added from. */
+  const bounds=editing.week
+    ? ` min="${editing.week}" max="${iso(addDays(fromIso(editing.week),6))}"`:'';
+  return `<div class="grab"></div>
+    <h3>${isNew?'Add':'Edit'} ${isExp?'expense':'profit'}</h3>
+    ${isExp?`<div class="field"><label>Category</label>
+      <div class="chips">${CATS.map(c=>`<button class="chip" data-ecat="${c}" aria-pressed="${editing.cat===c}">${CHIP[c]}</button>`).join('')}</div></div>`:''}
+    <div class="field"><label for="eAmount">Amount</label>
+      <div class="money" style="flex:1"><span>&#8369;</span><input id="eAmount" inputmode="decimal" value="${isNew?'':rec.amount}" placeholder="0"></div></div>
+    <div class="field"><label for="eNote">${isExp?'Note':'Source'}</label>
+      <input id="eNote" class="note" value="${isNew?'':esc(isExp?rec.reason:rec.source)}" placeholder="${isExp?'What was it for?':'Where from?'}"></div>
+    <div class="field"><label for="eDate">Date</label>
+      <input type="date" id="eDate" value="${isNew?editing.date:rec.date}"${bounds}></div>
+    <div class="err" id="editErr" hidden></div>
+    <div class="sheetacts">
+      <button class="btn sec2" id="cancelEdit">Cancel</button>
+      <button class="btn" id="saveEdit">${isNew?'Add':'Save'}</button>
+    </div>
+    ${isNew?'':`<button class="wide danger" id="deleteEdit">Delete this entry</button>`}`;
+}
+function settingsSheet(){
+  return `<div class="grab"></div>
+    <h3>Settings</h3>
+    <div class="field"><label for="allowance">Weekly allowance</label>
+      <div class="money" style="flex:1"><span>&#8369;</span><input id="allowance" inputmode="decimal" value="${state.allowance}"></div></div>
+    <div class="field"><label for="monthlyAllowance">Monthly allowance</label>
+      <div class="money" style="flex:1"><span>&#8369;</span><input id="monthlyAllowance" inputmode="decimal" value="${state.monthlyAllowance}"></div></div>
+    <div class="field"><label for="dailyLimit">Daily spending limit</label>
+      <div class="money" style="flex:1"><span>&#8369;</span><input id="dailyLimit" inputmode="decimal" value="${state.dailyLimit}"></div></div>
+    <p class="hint">Changing these updates the current week and month plus every one after. Finished weeks and months keep what they were actually budgeted with.</p>
+    <button class="wide" id="toggleBackup">${backupOpen?'Hide backup':'Back up or restore'}</button>
+    ${backupOpen?`<textarea class="backup" id="backupBox" spellcheck="false" aria-label="Backup data">${esc(JSON.stringify(state))}</textarea>
+      <p class="hint">Copy this somewhere safe. To restore, paste a saved backup over it and press Restore.</p>
+      <button class="wide" id="doRestore">Restore from the text above</button>`:''}
+    <button class="wide danger" id="wipe">Erase all saved data</button>
+    <div class="sheetacts"><button class="btn" id="closeSettings">Done</button></div>`;
+}
+/* Force a reflow so the off-screen start state is committed, then flip the
+   class. rAF would be tidier but is paused in hidden tabs, which would leave
+   the sheet stranded off-screen instead of merely un-animated. */
+function openSheet(){
+  const s=document.getElementById('sheet'), c=document.getElementById('scrim');
+  if(!s)return;
+  void s.offsetHeight;
+  s.classList.add('in');if(c)c.classList.add('in');
+}
+function closeSheet(){
+  const s=document.getElementById('sheet'), c=document.getElementById('scrim');
+  const done=()=>{editing=null;editingMonth=null;editingWeek=null;settingsOpen=false;backupOpen=false;render();};
+  if(!s){done();return;}
+  s.classList.remove('in');if(c)c.classList.remove('in');
+  RM.matches?done():setTimeout(done,220);
+}
+
+/* ---------- actions ---------- */
+function parseAmount(el){
+  const n=parseFloat(String(el.value).replace(/[^0-9.]/g,''));
+  return (isNaN(n)||n<=0)?null:Math.round(n*100)/100;
+}
+function showErr(id,msg){const e=document.getElementById(id);if(e){e.textContent=msg;e.hidden=false;}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+
+async function addExpense(){
+  const amtEl=document.getElementById('amount');
+  const amount=parseAmount(amtEl);
+  if(amount===null){showErr('expErr','Enter an amount greater than zero.');amtEl.focus();return;}
+  const reason=document.getElementById('reason').value.trim();
+  const rec={id:uid(),date:draft.date||today(),category:draft.cat,amount,reason};
+  state.expenses.push(rec);
+  await sealCurrentWeek();await sealCurrentMonth();await save();
+  const label=CHIP[draft.cat];
+  render();
+  const a=document.getElementById('amount');if(a)a.focus();
+  flash(`${label} &middot; ${peso(amount)} added`,()=>removeRec('expense',rec.id,true));
+}
+async function addProfit(){
+  const amtEl=document.getElementById('pAmount');
+  const amount=parseAmount(amtEl);
+  if(amount===null){showErr('proErr','Enter an amount greater than zero.');amtEl.focus();return;}
+  const source=document.getElementById('pSource').value.trim();
+  const rec={id:uid(),date:pDate||today(),amount,source};
+  state.profits.push(rec);
+  await sealCurrentWeek();await sealCurrentMonth();await save();
+  render();
+  const a=document.getElementById('pAmount');if(a)a.focus();
+  flash(`Profit &middot; ${peso(amount)} added`,()=>removeRec('profit',rec.id,true));
+}
+async function removeRec(kind,id,silent){
+  const arr=kind==='expense'?state.expenses:state.profits;
+  const i=arr.findIndex(r=>r.id===id);if(i<0)return;
+  const gone=arr.splice(i,1)[0];
+  await save();render();
+  if(!silent)flash(kind==='expense'?'Expense removed':'Profit removed',async()=>{
+    (kind==='expense'?state.expenses:state.profits).push(gone);await save();render();
+  });
+}
+/* Adds into a specific week from the monthly dashboard. Dates default to today
+   when the week is the current one, otherwise to that week's Monday. */
+function openNew(kind,wk){
+  const to=iso(addDays(fromIso(wk),6));
+  const def=(today()>=wk&&today()<=to)?today():wk;
+  editing={kind,id:null,week:wk,date:def,cat:draft.cat};
+  render();openSheet();
+}
+function openEdit(kind,id){
+  const rec=findRec(kind,id);
+  if(!rec)return;
+  editing={kind,id,cat:rec.category||null};
+  render();openSheet();
+}
+async function saveEdit(){
+  const isNew=!editing.id;
+  const rec=isNew?null:findRec(editing.kind,editing.id);
+  if(!isNew&&!rec){closeSheet();return;}
+  const amount=parseAmount(document.getElementById('eAmount'));
+  if(amount===null){showErr('editErr','Enter an amount greater than zero.');return;}
+  const dateEl=document.getElementById('eDate');
+  if(!dateEl.value){showErr('editErr','Pick a date.');return;}
+  if(isNew){
+    const note=document.getElementById('eNote').value.trim();
+    const created=editing.kind==='expense'
+      ?{id:uid(),date:dateEl.value,category:editing.cat,amount,reason:note}
+      :{id:uid(),date:dateEl.value,amount,source:note};
+    (editing.kind==='expense'?state.expenses:state.profits).push(created);
+    await sealCurrentWeek();await sealCurrentMonth();await save();
+    const kind=editing.kind;
+    closeSheet();
+    flash(`${kind==='expense'?'Expense':'Profit'} &middot; ${peso(amount)} added`,()=>removeRec(kind,created.id,true));
+    return;
+  }
+  const before={...rec};
+  rec.amount=amount;
+  rec.date=dateEl.value;
+  const noteVal=document.getElementById('eNote').value.trim();
+  if(editing.kind==='expense'){rec.reason=noteVal;rec.category=editing.cat;}
+  else{rec.source=noteVal;}
+  await save();
+  const kind=editing.kind, id=editing.id;
+  closeSheet();
+  flash('Entry updated',async()=>{
+    const r=findRec(kind,id);
+    if(r)Object.assign(r,before);
+    await save();render();
+  });
+}
+async function deleteFromEdit(){
+  const kind=editing.kind, id=editing.id;
+  const rec=findRec(kind,id);
+  if(!rec)return;
+  const gone={...rec};
+  closeSheet();
+  const arr=kind==='expense'?state.expenses:state.profits;
+  const i=arr.findIndex(r=>r.id===id);
+  if(i>=0)arr.splice(i,1);
+  await save();
+  flash(kind==='expense'?'Expense removed':'Profit removed',async()=>{
+    (kind==='expense'?state.expenses:state.profits).push(gone);await save();render();
+  });
+}
+
+/* Corrects one month and nothing else — not other months, not the default for
+   new months. Past months stay editable on purpose: the user may only notice a
+   mistake in their records long afterwards. */
+async function saveMonthAllowance(){
+  const ym=editingMonth;
+  const before=state.monthSettings[ym]?{...state.monthSettings[ym]}:null;
+  const v=Math.max(0,parseFloat(String(document.getElementById('mAllow').value).replace(/[^0-9.]/g,''))||0);
+  state.monthSettings[ym]={allowance:v};
+  await save();
+  closeSheet();
+  flash(`${monthLabel(ym)} allowance set to ${peso(v)}`,async()=>{
+    if(before)state.monthSettings[ym]=before; else delete state.monthSettings[ym];
+    await save();render();
+  });
+}
+
+/* Corrects one week's budget. Same rule as months: this week only, never the
+   defaults and never a neighbouring week. */
+async function saveWeekSettings(){
+  const wk=editingWeek;
+  const before=state.weekSettings[wk]?{...state.weekSettings[wk]}:null;
+  const num=id=>Math.max(0,parseFloat(String(document.getElementById(id).value).replace(/[^0-9.]/g,''))||0);
+  state.weekSettings[wk]={allowance:num('wAllow'),dailyLimit:num('wLimit')};
+  await save();
+  closeSheet();
+  flash(`Week of ${fmtDay(wk)} updated`,async()=>{
+    if(before)state.weekSettings[wk]=before; else delete state.weekSettings[wk];
+    await save();render();
+  });
+}
+/* Exclusion is an aggregation filter, never a deletion — the entries stay
+   exactly where they are and the weekly view is unaffected. */
+async function toggleWeekIncluded(){
+  const wk=editingWeek;
+  const was=!!state.excludedWeeks[wk];
+  if(was)delete state.excludedWeeks[wk]; else state.excludedWeeks[wk]=true;
+  await save();
+  closeSheet();
+  flash(was?`Week of ${fmtDay(wk)} counted again`:`Week of ${fmtDay(wk)} excluded`,async()=>{
+    if(was)state.excludedWeeks[wk]=true; else delete state.excludedWeeks[wk];
+    await save();render();
+  });
+}
+
+function flash(msg,undo){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').innerHTML=msg;
+  const act=document.getElementById('toastAct');
+  undoStack=undo||null;act.hidden=!undo;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),4000);
+}
+
+/* ---------- wiring ---------- */
+function wire(){
+  document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{view=b.dataset.view;render();});
+  const gear=document.getElementById('openSettings');
+  if(gear)gear.onclick=()=>{settingsOpen=true;render();openSheet();};
+
+  document.querySelectorAll('.chip[data-cat]').forEach(b=>b.onclick=()=>{
+    draft.cat=b.dataset.cat;
+    document.querySelectorAll('.chip[data-cat]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.cat===draft.cat)));
+    const a=document.getElementById('amount');if(a)a.focus();
+  });
+
+  const amount=document.getElementById('amount'),reason=document.getElementById('reason');
+  if(amount){
+    amount.oninput=reason.oninput=()=>{const e=document.getElementById('expErr');if(e)e.hidden=true;};
+    amount.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();reason.focus();}};
+    reason.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addExpense();}};
+    document.getElementById('addExpense').onclick=addExpense;
+  }
+  document.querySelectorAll('.dcol[data-day]').forEach(b=>b.onclick=()=>{
+    const d=b.dataset.day;
+    if(selDay===d){selDay=null;draft.date=null;}
+    else{selDay=d;draft.date=d===today()?null:d;}
+    render();
+    const a=document.getElementById('amount');if(a)a.focus();
+  });
+  const cd=document.getElementById('clearDay');
+  if(cd)cd.onclick=()=>{selDay=null;draft.date=null;render();};
+
+  const di=document.getElementById('dateInput');
+  if(di)di.onchange=()=>{
+    draft.date=di.value||today();
+    /* Keep the strip in step, but only for days inside the week it shows. */
+    selDay=inCurrentWeek(draft.date)?draft.date:null;
+    render();
+  };
+  const rd=document.getElementById('resetDate');
+  if(rd)rd.onclick=()=>{draft.date=null;selDay=null;render();};
+
+  const pA=document.getElementById('pAmount'),pS=document.getElementById('pSource');
+  if(pA){
+    pA.oninput=pS.oninput=()=>{const e=document.getElementById('proErr');if(e)e.hidden=true;};
+    pA.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();pS.focus();}};
+    pS.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addProfit();}};
+    document.getElementById('addProfit').onclick=addProfit;
+  }
+  const pdi=document.getElementById('pDateInput');
+  if(pdi)pdi.onchange=()=>{pDate=pdi.value||today();render();};
+  const prd=document.getElementById('pResetDate');
+  if(prd)prd.onclick=()=>{pDate=null;render();};
+
+  const pm=document.getElementById('prevMonth');
+  if(pm)pm.onclick=()=>{viewMonth=shiftMonth(viewMonth,-1);render();};
+  const nm=document.getElementById('nextMonth');
+  if(nm)nm.onclick=()=>{viewMonth=shiftMonth(viewMonth,1);render();};
+  document.querySelectorAll('[data-week]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.week;openWeeks[k]=!openWeeks[k];render();
+  });
+
+  document.querySelectorAll('.row[data-edit]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.open){closeRow(b);return;}
+    openEdit(b.dataset.kind,b.dataset.edit);
+  });
+  document.querySelectorAll('.delbtn[data-del]').forEach(b=>b.onclick=()=>removeRec(b.dataset.kind,b.dataset.del));
+
+  const scrim=document.getElementById('scrim');
+  if(scrim)scrim.onclick=closeSheet;
+  document.querySelectorAll('.chip[data-ecat]').forEach(b=>b.onclick=()=>{
+    editing.cat=b.dataset.ecat;
+    document.querySelectorAll('.chip[data-ecat]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.ecat===editing.cat)));
+  });
+  const ce=document.getElementById('cancelEdit');if(ce)ce.onclick=closeSheet;
+  const se=document.getElementById('saveEdit');if(se)se.onclick=saveEdit;
+  const de=document.getElementById('deleteEdit');if(de)de.onclick=deleteFromEdit;
+
+  const ema=document.getElementById('editMonthAllowance');
+  if(ema)ema.onclick=()=>{editingMonth=viewMonth;render();openSheet();};
+  document.querySelectorAll('[data-weekedit]').forEach(b=>b.onclick=()=>{
+    editingWeek=b.dataset.weekedit;render();openSheet();
+  });
+  document.querySelectorAll('[data-addexp]').forEach(b=>b.onclick=()=>openNew('expense',b.dataset.addexp));
+  document.querySelectorAll('[data-addpro]').forEach(b=>b.onclick=()=>openNew('profit',b.dataset.addpro));
+  const cw=document.getElementById('cancelWeek');if(cw)cw.onclick=closeSheet;
+  const swk=document.getElementById('saveWeek');if(swk)swk.onclick=saveWeekSettings;
+  const twi=document.getElementById('toggleWeekIncluded');if(twi)twi.onclick=toggleWeekIncluded;
+
+  const cm=document.getElementById('cancelMonth');if(cm)cm.onclick=closeSheet;
+  const sm=document.getElementById('saveMonth');if(sm)sm.onclick=saveMonthAllowance;
+
+  const cs=document.getElementById('closeSettings');if(cs)cs.onclick=closeSheet;
+  const al=document.getElementById('allowance'),dl=document.getElementById('dailyLimit'),ml=document.getElementById('monthlyAllowance');
+  const num=el=>Math.max(0,parseFloat(String(el.value).replace(/[^0-9.]/g,''))||0);
+  const commit=async()=>{
+    const a=num(al),d=num(dl),mo=num(ml);
+    state.allowance=a;state.dailyLimit=d;state.monthlyAllowance=mo;
+    state.weekSettings[curWeekKey()]={allowance:a,dailyLimit:d};
+    state.monthSettings[monthOf(curWeekKey())]={allowance:mo};
+    await save();
+  };
+  if(al)al.onchange=dl.onchange=ml.onchange=commit;
+
+  const tb=document.getElementById('toggleBackup');
+  if(tb)tb.onclick=()=>{backupOpen=!backupOpen;render();openSheet();};
+  const dr=document.getElementById('doRestore');
+  if(dr)dr.onclick=async()=>{
+    const box=document.getElementById('backupBox');
+    try{
+      const parsed=JSON.parse(box.value);
+      if(!parsed||!Array.isArray(parsed.expenses))throw new Error('shape');
+      state={expenses:parsed.expenses||[],profits:parsed.profits||[],
+        allowance:parsed.allowance??3000,dailyLimit:parsed.dailyLimit??500,
+        monthlyAllowance:parsed.monthlyAllowance??12000,
+        weekSettings:parsed.weekSettings||{},monthSettings:parsed.monthSettings||{},
+        excludedWeeks:parsed.excludedWeeks||{}};
+      await save();closeSheet();flash('Backup restored');
+    }catch(e){flash("That text isn't a valid backup");}
+  };
+  const wipe=document.getElementById('wipe');
+  if(wipe)wipe.onclick=async()=>{
+    if(!confirm('Erase every expense and profit you have logged, in every week? This cannot be undone.'))return;
+    state={expenses:[],profits:[],allowance:state.allowance,dailyLimit:state.dailyLimit,
+      monthlyAllowance:state.monthlyAllowance,weekSettings:{},monthSettings:{},excludedWeeks:{}};
+    await sealCurrentWeek();await sealCurrentMonth();await save();closeSheet();flash('All entries erased');
+  };
+}
+
+/* Swipe-to-delete. Delegated once so it survives the innerHTML rebuild.
+   Touch only — on desktop, delete lives in the edit sheet. */
+let sw=null;
+function closeRow(r){r.style.transform='';delete r.dataset.open;}
+document.addEventListener('touchstart',e=>{
+  const r=e.target.closest('.row[data-edit]');
+  document.querySelectorAll('.row[data-open]').forEach(o=>{if(o!==r)closeRow(o);});
+  if(!r){sw=null;return;}
+  sw={r,x:e.touches[0].clientX,y:e.touches[0].clientY,dx:0,lock:null,base:r.dataset.open?-88:0};
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!sw)return;
+  const dx=e.touches[0].clientX-sw.x, dy=e.touches[0].clientY-sw.y;
+  if(sw.lock===null&&(Math.abs(dx)>8||Math.abs(dy)>8))sw.lock=Math.abs(dx)>Math.abs(dy)?'x':'y';
+  if(sw.lock!=='x')return;
+  e.preventDefault();
+  sw.dx=Math.max(-88,Math.min(0,sw.base+dx));
+  sw.r.style.transition='none';
+  sw.r.style.transform=`translateX(${sw.dx}px)`;
+},{passive:false});
+document.addEventListener('touchend',()=>{
+  if(!sw)return;
+  const r=sw.r;
+  r.style.transition='';
+  if(sw.lock==='x'){
+    if(sw.dx<-44){r.style.transform='translateX(-88px)';r.dataset.open='1';}
+    else closeRow(r);
+  }
+  sw=null;
+},{passive:true});
+
+document.getElementById('toastAct').onclick=()=>{
+  if(undoStack)undoStack();
+  undoStack=null;
+  document.getElementById('toast').classList.remove('show');
+};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(editing||settingsOpen))closeSheet();});
+
+/* If the app is left open across midnight, roll the week over on its own. */
+setInterval(async()=>{
+  if(today()!==lastSeenDay){await sealCurrentWeek();await sealCurrentMonth();render();}
+},30000);
+
+(async()=>{await load();await sealCurrentWeek();await sealCurrentMonth();render();})();
+
+/* Registers the offline shell so the app works from the home screen with no
+   connection. Same-origin only — the app still makes no external requests.
+   Service workers are unavailable over file://, so this is a silent no-op when
+   the file is opened straight from disk. */
+if('serviceWorker' in navigator &&
+   (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{});});
+}
+</script>
+</body>
+</html>
